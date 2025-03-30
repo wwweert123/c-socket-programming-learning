@@ -95,14 +95,14 @@ void receive_file(int sockfd, struct sockaddr_in *client_addr, socklen_t addr_le
 
         memcpy((buf + lseek), recvs, n);
         lseek += n;
-    }
 
-    // Send acknowledgment
-    ack.num = 1;
-    ack.len = 0;
-    if (sendto(sockfd, &ack, 2, 0, (struct sockaddr *)client_addr, addr_len) == -1) {
-        printf("Error sending acknowledgment");
-        exit(EXIT_FAILURE);
+        // Send acknowledgment
+        ack.num = 1;
+        ack.len = 0;
+        if (sendto(sockfd, &ack, 2, 0, (struct sockaddr *)client_addr, addr_len) == -1) {
+            printf("Error sending acknowledgment");
+            exit(EXIT_FAILURE);
+        }
     }
 
     // Write received data to file

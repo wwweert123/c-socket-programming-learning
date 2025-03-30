@@ -118,32 +118,47 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr_in *serv_addr, socklen_t add
 	buf[lsize] = '\0';
 
 	gettimeofday(&sendt, NULL);
+
+	int packets_sent = 0;
 	while(ci<= lsize) {
         slen = ((lsize + 1 - ci) <= DATALEN) ? (lsize + 1 - ci) : DATALEN;
         memcpy(sends, (buf + ci), slen);
 
+		packets_sent += 1;
+		printf("Sending packet %d... ", packets_sent);
+
 		n = sendto(sockfd, &sends, slen, 0, (struct sockaddr *)serv_addr, addr_len);
 		if(n == -1) {
-			printf("send error!");
+			printf("Error sending data");
 			free(buf);
 			exit(EXIT_FAILURE);
 		}
+
+		// Receive acknowledgment after sending each packet
+        n = recvfrom(sockfd, &ack, sizeof(struct ack_so), 0, (struct sockaddr *)serv_addr, &addr_len);
+        if (n == -1) {
+            printf("Error receiving acknowledgment\ns");
+            free(buf);
+            exit(EXIT_FAILURE);
+        }
+
+        // Validate acknowledgment
+        if (ack.num != 1 || ack.len != 0) {
+            printf("Error: Invalid ACK received. Transmission failed.\n");
+            free(buf);
+            exit(EXIT_FAILURE);
+        }
+
 		ci += slen;
-	}
-
-	n = recvfrom(sockfd, &ack, 2, 0, (struct sockaddr *)serv_addr, &addr_len);
-	if (n == -1) {
-		printf("error when receiving\n");
-		exit(1);
-	}
-
-	if (ack.num != 1|| ack.len != 0) {
-		printf("error in transmission\n");
+		printf("ACK received.\n");
 	}
 
 	gettimeofday(&recvt, NULL);
 	*len= ci;
 	tv_sub(&recvt, &sendt);
+
+	// Final log message after successful transmission
+    printf("✅ File successfully sent! Transmission completed.\n");
 
 	float time_inv = (recvt.tv_sec)*1000.0 + (recvt.tv_usec)/1000.0;
 	free(buf);
