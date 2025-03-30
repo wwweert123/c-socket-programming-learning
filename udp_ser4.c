@@ -4,13 +4,16 @@ tcp_ser.c: the source file of the server in tcp transmission
 
 
 #include "headsock.h"
+#include <stdbool.h>
 
 #define BACKLOG 10
+#define ERROR_PROBABILITY 0.1
 
 void str_ser(int sockfd);
 int setup_server_socket(struct sockaddr_in *my_addr);
 void receive_file(int sockfd, struct sockaddr_in *client_addr, socklen_t addr_len);
 int verify_file();
+bool simulate_error(float error_prob);
 
 int main(void)
 {
@@ -23,6 +26,20 @@ int main(void)
 
 	close(sockfd);
 	return 0;
+}
+
+// Simulate an error based on error probability
+bool simulate_error(float error_prob) {
+    if (error_prob < 0.0 || error_prob > 1.0) {
+        fprintf(stderr, "Error: Invalid error probability. Must be between 0 and 1.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int error_range = (int)(error_prob * 1000);  // Convert probability to a range between 0 and 999
+    int rand_num = rand() % 1000;                // Generate a random number between 0 and 999
+
+    // If the random number falls within the error range, return true (error occurs)
+    return rand_num < error_range;
 }
 
 // Set up the UDP server socket and return the descriptor
@@ -85,6 +102,20 @@ void receive_file(int sockfd, struct sockaddr_in *client_addr, socklen_t addr_le
         if (n == -1) {
             perror("Error receiving data");
             exit(EXIT_FAILURE);
+        }
+
+        bool simulateError = simulate_error(ERROR_PROBABILITY);
+        if (simulateError) {
+            printf("Error Detected!\n");
+
+            ack.num = 0;
+            ack.len = 0;
+            if (sendto(sockfd, &ack, 2, 0, (struct sockaddr *)client_addr, addr_len) == -1) {
+                printf("Error sending acknowledgment");
+                exit(EXIT_FAILURE);
+            }
+
+            continue;
         }
 
         // Check if it's the end of the file

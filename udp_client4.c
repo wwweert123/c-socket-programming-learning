@@ -143,11 +143,18 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr_in *serv_addr, socklen_t add
         }
 
         // Validate acknowledgment
-        if (ack.num != 1 || ack.len != 0) {
+        if (ack.len != 0) {
             printf("Error: Invalid ACK received. Transmission failed.\n");
             free(buf);
             exit(EXIT_FAILURE);
         }
+
+		// NACK received, retransmit
+		if (ack.num == 0) {
+			printf("NACK received... Retransmitting packet %d\n", packets_sent);
+			packets_sent -= 1;
+			continue;
+		}
 
 		ci += slen;
 		printf("ACK received.\n");
