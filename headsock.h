@@ -33,3 +33,9 @@ struct ack_so
 uint8_t num;
 uint8_t len;
 };
+
+struct ack_so1
+{
+uint8_t check;
+uint8_t ack_flag;
+};

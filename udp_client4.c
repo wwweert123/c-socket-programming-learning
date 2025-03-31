@@ -97,7 +97,7 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr_in *serv_addr, socklen_t add
 	int n, slen;
 	char *buf, sends[DATALEN];
 
-	struct ack_so ack;
+	struct ack_so1 ack;
 	struct timeval sendt, recvt;
 
 	// Get File size and read into buffer
@@ -135,7 +135,7 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr_in *serv_addr, socklen_t add
 		}
 
 		// Receive acknowledgment after sending each packet
-        n = recvfrom(sockfd, &ack, sizeof(struct ack_so), 0, (struct sockaddr *)serv_addr, &addr_len);
+        n = recvfrom(sockfd, &ack, sizeof(struct ack_so1), 0, (struct sockaddr *)serv_addr, &addr_len);
         if (n == -1) {
             printf("Error receiving acknowledgment\ns");
             free(buf);
@@ -143,14 +143,14 @@ float str_cli(FILE *fp, int sockfd, struct sockaddr_in *serv_addr, socklen_t add
         }
 
         // Validate acknowledgment
-        if (ack.len != 0) {
+        if (ack.check != 0) {
             printf("Error: Invalid ACK received. Transmission failed.\n");
             free(buf);
             exit(EXIT_FAILURE);
         }
 
 		// NACK received, retransmit
-		if (ack.num == 0) {
+		if (ack.ack_flag == 0) {
 			printf("NACK received... Retransmitting packet %d\n", packets_sent);
 			packets_sent -= 1;
 			continue;

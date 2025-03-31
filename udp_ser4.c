@@ -89,7 +89,7 @@ void receive_file(int sockfd, struct sockaddr_in *client_addr, socklen_t addr_le
 {
     char buf[BUFSIZE];
     char recvs[DATALEN];
-    struct ack_so ack;
+    struct ack_so1 ack;
     FILE *fp;
     int n = 0, end = 0;
     long lseek = 0;
@@ -108,8 +108,8 @@ void receive_file(int sockfd, struct sockaddr_in *client_addr, socklen_t addr_le
         if (simulateError) {
             printf("Error Detected!\n");
 
-            ack.num = 0;
-            ack.len = 0;
+            ack.check = 0;
+            ack.ack_flag = 0;
             if (sendto(sockfd, &ack, 2, 0, (struct sockaddr *)client_addr, addr_len) == -1) {
                 printf("Error sending acknowledgment");
                 exit(EXIT_FAILURE);
@@ -128,8 +128,8 @@ void receive_file(int sockfd, struct sockaddr_in *client_addr, socklen_t addr_le
         lseek += n;
 
         // Send acknowledgment
-        ack.num = 1;
-        ack.len = 0;
+        ack.ack_flag = 1;
+        ack.check = 0;
         if (sendto(sockfd, &ack, 2, 0, (struct sockaddr *)client_addr, addr_len) == -1) {
             printf("Error sending acknowledgment");
             exit(EXIT_FAILURE);
